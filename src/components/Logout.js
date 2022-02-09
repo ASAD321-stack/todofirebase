@@ -15,7 +15,7 @@ export const Logout = () => {
     <div>
       <Button
         type="submit"
-        style={{ marginTop: "10px", marginLeft: "20px",backgroundColor:"red" }}
+        style={{ marginTop: "10px", marginLeft: "20px",backgroundColor:"BLACK" }}
         onClick={logout}
         variant="contained"
       >

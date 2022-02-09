@@ -6,18 +6,17 @@ import Signup from "./components/signup";
 import InputTodo from "./components/InputTodo";
 import { auth } from "./firebase_config";
 import { onAuthStateChanged } from "firebase/auth";
-
 import { useEffect, useState } from "react";
 
 function App() {
   const [log, setLog] = useState(null);
-
   useEffect(() => {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         setLog(user);
       } else {
         setLog(null);
+
       }
     });
   }, []);

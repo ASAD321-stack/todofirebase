@@ -2,21 +2,20 @@ import React from "react";
 import { useState } from "react";
 import { auth } from "../firebase_config";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { Link, useNavigate } from "react-router-dom";
-
+import { Link,useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [user, setUser] = useState({ email: "", password: "" });
-  const navigate = useNavigate();
+  const navigate =useNavigate();
 
   const login = async (e) => {
     const { email, password } = user;
     e.preventDefault();
     try {
       const user = await signInWithEmailAndPassword(auth, email, password);
-      navigate("/");
+      navigate('/');
     } catch (e) {
-      alert(e);
+      console.log(e);
     }
   };
   const handleChange = (e) => {
@@ -77,8 +76,6 @@ const Login = () => {
           Forgot <a href="#">password?</a>
         </p>
       </form>
-
-     
     </div>
   );
 };

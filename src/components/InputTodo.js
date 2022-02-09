@@ -2,21 +2,23 @@ import React from "react";
 import TextField from "@mui/material/TextField";
 import { db } from "../firebase_config";
 import { collection, addDoc } from "firebase/firestore";
-import { getDocs, onSnapshot } from "firebase/firestore";
+import { getDocs, onSnapshot, updateDoc } from "firebase/firestore";
 import Button from "@mui/material/Button";
 import { useState, useEffect } from "react";
 import AddTodo from "./AddTodo";
 import { Logout } from "./Logout";
 import { query, where } from "firebase/firestore";
+import { deleteDoc, doc } from "firebase/firestore";
 
 const InputTodo = ({ user }) => {
   const [input, setInput] = useState("");
   const [view, setView] = useState([]);
   const userid = user.uid;
-
+  // add
   const add = async (e) => {
     console.log("what are you trying todo");
     e.preventDefault();
+
     try {
       const docRef = await addDoc(collection(db, "todos"), {
         todo: input,
@@ -24,6 +26,22 @@ const InputTodo = ({ user }) => {
         userid: userid,
         timestamp: Date.now(),
       });
+
+      setView([
+        ...view,
+        {
+          id: docRef.id,
+          todo: input,
+          inprogress: true,
+          userid: userid,
+          timestamp: Date.now(),
+        },
+      ]);
+
+      // const removeItem = view.filter((todo) => {
+      //   return todo.id !== docRef.id;
+      // });
+      // setView(removeItem);
       console.log("Document written with ID: ", docRef.id);
     } catch (e) {
       console.error("Error adding document: ", e);
@@ -33,51 +51,61 @@ const InputTodo = ({ user }) => {
 
   useEffect(() => {
     getTodo();
+    // return function cleanup() {
+    //   getTodo();
+    // };
   }, []);
 
-  // const getTodo = async () => {
-  //   const q = query(collection(db, "todos"), where("userid", "==", userid));
-  //   const querySnapshot = await getDocs(q);
-  //   setView(
-  //     querySnapshot.docs.map((doc) => ({
-  //       id: doc.id,
-  //       todo: doc.data().todo,
-  //       inprogress: doc.data().inprogress,
-  //       timestamp: doc.data().timestamp,
-  //     }))
-  //   );
-  // };
-
-  const getTodo = () => {
+  const getTodo = async () => {
     const q = query(collection(db, "todos"), where("userid", "==", userid));
-    onSnapshot(q, (querySnapshot) => {
-      setView(
-        querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          todo: doc.data().todo,
-          inprogress: doc.data().inprogress,
-        }))
-      );
-    });
+    const querySnapshot = await getDocs(q);
+    setView(
+      querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        todo: doc.data().todo,
+        inprogress: doc.data().inprogress,
+        timestamp: doc.data().timestamp,
+      }))
+    );
   };
 
-  //   try {
+  const deleted = async (id) => {
+    await deleteDoc(doc(db, "todos", id));
+    const removeItem = view.filter((todo) => {
+      return todo.id !== id;
+    });
+    setView(removeItem);
+  };
+
+  const update = async (id, inprogress) => {
+    const ids = doc(db, "todos", id);
+    await updateDoc(ids, {
+      inprogress: !inprogress,
+    });
+    const update = view.map((todo) => {
+      if (todo.id === id) {
+        return { ...todo, inprogress: !inprogress };
+      }
+      return todo;
+    });
+    setView(update);
+  };
+
+  //get realtime
+  // function getTodo() {
+  //   const q = query(collection(db, "todos"), where("userid", "==", userid));
+  //   onSnapshot(q, (querySnapshot) => {
   //     setView(
-  //       querySnapshot.map((doc) => ({
+  //       querySnapshot.docs.map((doc) => (
+  //         {
   //         id: doc.id,
   //         todo: doc.data().todo,
-  //         iprogress: doc.data().iprogress
-
-  //       }))
-  //     )
-  //   } catch (e) {
-  //     console.error("Error getting document: ", e);
-  //   }
+  //         inprogress: doc.data().inprogress,
+  //       }
+  //       ))
+  //     );
+  //   });
   // }
-  // //
-
-  // {
-  //   console.log(`${doc.id} => ${doc.data()}`); }
 
   return (
     <div>
@@ -106,6 +134,8 @@ const InputTodo = ({ user }) => {
         <AddTodo
           todo={element.todo}
           key={element.id}
+          deleted={deleted}
+          update={update}
           id={element.id}
           inprogress={element.inprogress}
           timestamp={element.timestamp}
